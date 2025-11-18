@@ -94,6 +94,31 @@ local function CreateNotification(title, message, duration)
 end
 
 -- ====== REMOTE LOGGER ======
+local function SafePrintArgs(args)
+    if #args == 0 then
+        print("Args: [No arguments]")
+        return
+    end
+    
+    print("Args Count:", #args)
+    for i = 1, #args do
+        local arg = args[i]
+        local argType = typeof(arg)
+        
+        if argType == "string" or argType == "number" or argType == "boolean" then
+            print("  [" .. i .. "]", argType, "=", arg)
+        elseif argType == "Vector3" then
+            print("  [" .. i .. "]", "Vector3 =", tostring(arg))
+        elseif argType == "CFrame" then
+            print("  [" .. i .. "]", "CFrame =", tostring(arg))
+        elseif argType == "Instance" then
+            print("  [" .. i .. "]", "Instance =", arg:GetFullName())
+        else
+            print("  [" .. i .. "]", argType, "=", tostring(arg))
+        end
+    end
+end
+
 local function SetupRemoteLogger()
     local oldNamecall
     oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
@@ -102,47 +127,39 @@ local function SetupRemoteLogger()
         
         if LoggingEnabled then
             if method == "FireServer" and self:IsA("RemoteEvent") then
-                local logData = {
-                    time = GetTimestamp(),
-                    type = "RemoteEvent",
-                    name = self.Name,
-                    path = self:GetFullName(),
-                    args = args
-                }
-                table.insert(remoteLogs, logData)
-                
-                print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                print("[Remote] FireServer -", self.Name)
-                print("Path:", self:GetFullName())
-                local success, encoded = pcall(function()
-                    return HttpService:JSONEncode(args)
+                pcall(function()
+                    local logData = {
+                        time = GetTimestamp(),
+                        type = "RemoteEvent",
+                        name = self.Name,
+                        path = self:GetFullName()
+                    }
+                    table.insert(remoteLogs, logData)
+                    
+                    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    print("[Remote] FireServer -", self.Name)
+                    print("Path:", self:GetFullName())
+                    SafePrintArgs(args)
+                    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 end)
-                if success then
-                    print("Args:", encoded)
-                else
-                    print("Args: [Complex data - cannot encode]")
-                    for i, arg in ipairs(args) do
-                        print("  Arg", i, ":", typeof(arg), tostring(arg))
-                    end
-                end
-                print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             end
             
             if method == "InvokeServer" and self:IsA("RemoteFunction") then
-                local logData = {
-                    time = GetTimestamp(),
-                    type = "RemoteFunction",
-                    name = self.Name,
-                    path = self:GetFullName(),
-                    args = args
-                }
-                table.insert(remoteLogs, logData)
-                
-                print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                print("[Remote] InvokeServer -", self.Name)
-                print("Path:", self:GetFullName())
-                print("Args:", HttpService:JSONEncode(args))
-                print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                pcall(function()
+                    local logData = {
+                        time = GetTimestamp(),
+                        type = "RemoteFunction",
+                        name = self.Name,
+                        path = self:GetFullName()
+                    }
+                    table.insert(remoteLogs, logData)
+                    
+                    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    print("[Remote] InvokeServer -", self.Name)
+                    print("Path:", self:GetFullName())
+                    SafePrintArgs(args)
+                    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                end)
             end
         end
         
