@@ -114,7 +114,17 @@ local function SetupRemoteLogger()
                 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 print("[Remote] FireServer -", self.Name)
                 print("Path:", self:GetFullName())
-                print("Args:", HttpService:JSONEncode(args))
+                local success, encoded = pcall(function()
+                    return HttpService:JSONEncode(args)
+                end)
+                if success then
+                    print("Args:", encoded)
+                else
+                    print("Args: [Complex data - cannot encode]")
+                    for i, arg in ipairs(args) do
+                        print("  Arg", i, ":", typeof(arg), tostring(arg))
+                    end
+                end
                 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             end
             
